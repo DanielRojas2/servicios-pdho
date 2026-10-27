@@ -1,0 +1,563 @@
+{
+  "info": {
+    "_postman_id": "pdho-fase-4-collection-v2",
+    "name": "PDHO - Módulo de Formularios Hoteleros (Carga Manual y Respaldo Digital)",
+    "description": "Colección completa para pruebas de creación desde cero, edición, carga manual, foto como respaldo y transformación interna a PDF para los formularios de Estadísticas Hoteleras y Ocupación Hotelera.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:8000",
+      "type": "string"
+    },
+    {
+      "key": "token_operador",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "token_admin",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "form_estadistica_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "form_ocupacion_id",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Autenticación",
+      "item": [
+        {
+          "name": "Login Operador Hospedaje",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.access_token) {",
+                  "    pm.collectionVariables.set('token_operador', jsonData.access_token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"carlos_imperio@hotel.bo\",\n  \"password\": \"HotelPassword123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "usuarios", "login"]
+            }
+          }
+        },
+        {
+          "name": "Login Administrador Departamental",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.access_token) {",
+                  "    pm.collectionVariables.set('token_admin', jsonData.access_token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin_dept@oruro.gob.bo\",\n  \"password\": \"AdminPassword123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "usuarios", "login"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Períodos Disponibles y Calendario Dinámico",
+      "item": [
+        {
+          "name": "Consultar Períodos y Días Reales (Gestión Actual - 2026)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_operador}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/formularios/periodos-disponibles?gestion=2026&tipo_formulario=estadistica",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "formularios", "periodos-disponibles"],
+              "query": [
+                {
+                  "key": "gestion",
+                  "value": "2026"
+                },
+                {
+                  "key": "tipo_formulario",
+                  "value": "estadistica"
+                }
+              ]
+            },
+            "description": "Calcula según calendario real los días de cada mes (ej. 28/29 en febrero, 30 en abril, 31 en agosto). Para la gestión actual, permite únicamente meses anteriores al mes en curso (ej. si hoy es octubre, permite enero a septiembre) y bloquea meses ya declarados."
+          }
+        },
+        {
+          "name": "Consultar Períodos y Días Reales (Gestión Pasada - 2025)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_operador}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/formularios/periodos-disponibles?gestion=2025&tipo_formulario=ocupacion",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "formularios", "periodos-disponibles"],
+              "query": [
+                {
+                  "key": "gestion",
+                  "value": "2025"
+                },
+                {
+                  "key": "tipo_formulario",
+                  "value": "ocupacion"
+                }
+              ]
+            },
+            "description": "Para gestiones pasadas (ej. 2025), permite declarar cualquier mes de enero a diciembre siempre y cuando no haya sido declarado previamente."
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Respaldo Digital (Foto a PDF)",
+      "item": [
+        {
+          "name": "Subir Foto de Respaldo y Convertir a PDF",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_operador}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "description": "Seleccionar fotografía JPG/PNG/WEBP del formulario físico"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/formularios/subir-respaldo?tipo_formulario=estadistica",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "formularios", "subir-respaldo"],
+              "query": [
+                {
+                  "key": "tipo_formulario",
+                  "value": "estadistica"
+                }
+              ]
+            },
+            "description": "Sube la imagen física, la comprime y transforma internamente a PDF para respaldo legal y ahorro de espacio."
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Estadísticas Hoteleras (Formulario 1)",
+      "item": [
+        {
+          "name": "4.1 Crear Declaración Desde Cero (Carga Manual)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.id) {",
+                  "    pm.collectionVariables.set('form_estadistica_id', jsonData.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_operador}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"numero_formulario\": \"000360\",\n  \"mes\": \"Agosto\",\n  \"gestion\": 2026,\n  \"fecha_presentacion\": \"2026-09-07\",\n  \"cant_emp_perma\": 0,\n  \"cant_emp_event\": 2,\n  \"archivo_foto\": \"uploads/formularios/fotos/1/estadistica_demo.jpg\",\n  \"archivo_pdf\": \"uploads/formularios/pdfs/1/estadistica_demo.pdf\",\n  \"observaciones\": \"Carga manual según planilla física Nº 000360\",\n  \"detalles\": [\n    {\n      \"dia\": 14,\n      \"id_nacionalidad\": 1,\n      \"cant_ingresos\": 2,\n      \"cant_permanencias\": 0\n    },\n    {\n      \"dia\": 15,\n      \"id_nacionalidad\": 1,\n      \"cant_ingresos\": 0,\n      \"cant_permanencias\": 2\n    },\n    {\n      \"dia\": 16,\n      \"id_nacionalidad\": 1,\n      \"cant_ingresos\": 0,\n      \"cant_permanencias\": 2\n    },\n    {\n      \"dia\": 17,\n      \"id_nacionalidad\": 1,\n      \"cant_ingresos\": 0,\n      \"cant_permanencias\": 2\n    },\n    {\n      \"dia\": 18,\n      \"id_nacionalidad\": 1,\n      \"cant_ingresos\": 0,\n      \"cant_permanencias\": 2\n    },\n    {\n      \"dia\": 25,\n      \"id_nacionalidad\": 2,\n      \"cant_ingresos\": 1,\n      \"cant_permanencias\": 0\n    },\n    {\n      \"dia\": 26,\n      \"id_nacionalidad\": 2,\n      \"cant_ingresos\": 0,\n      \"cant_permanencias\": 1\n    },\n    {\n      \"dia\": 27,\n      \"id_nacionalidad\": 2,\n      \"cant_ingresos\": 0,\n      \"cant_permanencias\": 1\n    },\n    {\n      \"dia\": 28,\n      \"id_nacionalidad\": 2,\n      \"cant_ingresos\": 0,\n      \"cant_permanencias\": 1\n    },\n    {\n      \"dia\": 29,\n      \"id_nacionalidad\": 2,\n      \"cant_ingresos\": 0,\n      \"cant_permanencias\": 1\n    },\n    {\n      \"dia\": 30,\n      \"id_nacionalidad\": 2,\n      \"cant_ingresos\": 0,\n      \"cant_permanencias\": 1\n    },\n    {\n      \"dia\": 31,\n      \"id_nacionalidad\": 2,\n      \"cant_ingresos\": 0,\n      \"cant_permanencias\": 1\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/estadisticas-hoteleras/",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "estadisticas-hoteleras", ""]
+            },
+            "description": "Crea el formulario directamente desde cero. Estado se unifica en ENVIADO. El resumen se calcula automáticamente: Nacionales: 10, Extranjeros: 7, Totales: 17."
+          }
+        },
+        {
+          "name": "4.2 Editar Declaración (PUT)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_operador}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cant_emp_perma\": 1,\n  \"observaciones\": \"Actualización de observaciones y número de empleados permanentes\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/estadisticas-hoteleras/{{form_estadistica_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "estadisticas-hoteleras", "{{form_estadistica_id}}"]
+            }
+          }
+        },
+        {
+          "name": "4.3 Adjuntar Respaldo a Declaración Existente",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_operador}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "description": "Fotografía del formulario físico para adjuntar como respaldo"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/estadisticas-hoteleras/{{form_estadistica_id}}/respaldo",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "estadisticas-hoteleras", "{{form_estadistica_id}}", "respaldo"]
+            }
+          }
+        },
+        {
+          "name": "4.4 Listar Declaraciones de Estadísticas Hoteleras",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_operador}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/estadisticas-hoteleras/?mes=Agosto&gestion=2026",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "estadisticas-hoteleras", ""],
+              "query": [
+                {
+                  "key": "mes",
+                  "value": "Agosto"
+                },
+                {
+                  "key": "gestion",
+                  "value": "2026"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "4.5 Obtener Detalle de Declaración por ID",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_operador}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/estadisticas-hoteleras/{{form_estadistica_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "estadisticas-hoteleras", "{{form_estadistica_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Ocupación Hotelera (Formulario 2)",
+      "item": [
+        {
+          "name": "5.1 Crear Ocupación Desde Cero (Carga Manual)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.id) {",
+                  "    pm.collectionVariables.set('form_ocupacion_id', jsonData.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_operador}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mes\": \"Agosto\",\n  \"gestion\": 2026,\n  \"fecha_presentacion\": \"2026-09-07\",\n  \"observaciones\": \"Registro diario manual de habitaciones y personas\",\n  \"detalles\": [\n    {\"dia\": 14, \"hab_ocupadas\": 2, \"cant_personas\": 2},\n    {\"dia\": 15, \"hab_ocupadas\": 2, \"cant_personas\": 2},\n    {\"dia\": 16, \"hab_ocupadas\": 2, \"cant_personas\": 2},\n    {\"dia\": 17, \"hab_ocupadas\": 2, \"cant_personas\": 2},\n    {\"dia\": 18, \"hab_ocupadas\": 2, \"cant_personas\": 2},\n    {\"dia\": 25, \"hab_ocupadas\": 1, \"cant_personas\": 1},\n    {\"dia\": 26, \"hab_ocupadas\": 1, \"cant_personas\": 1},\n    {\"dia\": 27, \"hab_ocupadas\": 1, \"cant_personas\": 1},\n    {\"dia\": 28, \"hab_ocupadas\": 1, \"cant_personas\": 1},\n    {\"dia\": 29, \"hab_ocupadas\": 1, \"cant_personas\": 1},\n    {\"dia\": 30, \"hab_ocupadas\": 1, \"cant_personas\": 1},\n    {\"dia\": 31, \"hab_ocupadas\": 1, \"cant_personas\": 1}\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ocupacion-hotelera/",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "ocupacion-hotelera", ""]
+            },
+            "description": "Crea la ocupación diaria desde cero. Calcula total de habitaciones ocupadas (17) y personas (17). Estado directo ENVIADO."
+          }
+        },
+        {
+          "name": "5.2 Editar Ocupación (PUT)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_operador}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"observaciones\": \"Corrección de notas de ocupación\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ocupacion-hotelera/{{form_ocupacion_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "ocupacion-hotelera", "{{form_ocupacion_id}}"]
+            }
+          }
+        },
+        {
+          "name": "5.3 Adjuntar Respaldo a Ocupación Existente",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_operador}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "description": "Foto del formulario físico de ocupación para respaldo"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ocupacion-hotelera/{{form_ocupacion_id}}/respaldo",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "ocupacion-hotelera", "{{form_ocupacion_id}}", "respaldo"]
+            }
+          }
+        },
+        {
+          "name": "5.4 Listar Formularios de Ocupación",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_operador}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ocupacion-hotelera/?mes=Agosto&gestion=2026",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "ocupacion-hotelera", ""],
+              "query": [
+                {
+                  "key": "mes",
+                  "value": "Agosto"
+                },
+                {
+                  "key": "gestion",
+                  "value": "2026"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "5.5 Obtener Detalle de Ocupación por ID",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_operador}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ocupacion-hotelera/{{form_ocupacion_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "ocupacion-hotelera", "{{form_ocupacion_id}}"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

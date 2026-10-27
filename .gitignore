@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.coverage
+htmlcov/
+*.log
+# Entornos y secretos protegidos (AGETIC / PISI / PISLEA)
+.env*
+!.env.example

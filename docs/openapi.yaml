@@ -1,0 +1,4221 @@
+openapi: 3.1.0
+info:
+  title: API Plataforma Hotelera Oruro PDHO
+  description: 'API de alto rendimiento para la digitalización, recopilación, consolidación y análisis estadístico mensual de ocupación y estadísticas hoteleras en Oruro (PDHO). Desarrollada con arquitectura modular y lineamientos AGETIC.
+
+
+    ### 📚 Recursos de Documentación y Especificación:
+
+    - 📖 **ReDoc UI:** [/api/v1/redoc](/api/v1/redoc)
+
+    - ⚡ **Swagger UI interactivo:** [/api/v1/docs](/api/v1/docs)
+
+    - 📥 **[Descargar Especificación OpenAPI YAML (openapi.yaml)](/api/v1/openapi.yaml/download)**
+
+    - 📄 **[Ver Especificación OpenAPI YAML en el navegador](/api/v1/openapi.yaml)**
+
+    - 🌐 **[Ver Especificación OpenAPI JSON](/api/v1/openapi.json)**'
+  contact:
+    name: Unidad de Turismo y Gobernanza Digital - Oruro
+    url: https://oruro.gob.bo/
+  license:
+    name: Gobierno Autónomo Departamental de Oruro
+  version: 1.0.0
+paths:
+  /api/v1/usuarios/login:
+    post:
+      tags:
+      - Usuarios y Autenticación
+      summary: Login
+      description: 'Inicio de sesión para Administradores y Operadores de Hospedaje.
+
+        Genera y retorna un token JWT válido conforme a las políticas de seguridad.'
+      operationId: login_api_v1_usuarios_login_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/usuarios/me:
+    get:
+      tags:
+      - Usuarios y Autenticación
+      summary: Get Me
+      description: Retorna la información del perfil del usuario actualmente autenticado.
+      operationId: get_me_api_v1_usuarios_me_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/usuarios/:
+    post:
+      tags:
+      - Usuarios y Autenticación
+      summary: Create User
+      description: 'Crea un nuevo usuario en la plataforma.
+
+        Restringido al Administrador Departamental.
+
+        Envía automáticamente las credenciales al correo del usuario y registra el
+        estado en `credenciales_enviadas`.'
+      operationId: create_user_api_v1_usuarios__post
+      security:
+      - OAuth2PasswordBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    get:
+      tags:
+      - Usuarios y Autenticación
+      summary: List Users
+      description: Lista usuarios registrados con paginación y filtro opcional por
+        rol.
+      operationId: list_users_api_v1_usuarios__get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: skip
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+          title: Skip
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 50
+          title: Limit
+      - name: rol
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - $ref: '#/components/schemas/RolUsuario'
+          - type: 'null'
+          title: Rol
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserResponse'
+                title: Response List Users Api V1 Usuarios  Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/usuarios/{user_id}:
+    get:
+      tags:
+      - Usuarios y Autenticación
+      summary: Get User By Id
+      description: Obtiene los detalles de un usuario por su identificador único.
+      operationId: get_user_by_id_api_v1_usuarios__user_id__get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: user_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: User Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    patch:
+      tags:
+      - Usuarios y Autenticación
+      summary: Update User
+      description: Actualiza la información de un usuario. Restringido a Administradores.
+      operationId: update_user_api_v1_usuarios__user_id__patch
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: user_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: User Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/usuarios/{user_id}/reenviar-credenciales:
+    post:
+      tags:
+      - Usuarios y Autenticación
+      summary: Resend Credentials
+      description: Regenera una contraseña temporal y reenvía las credenciales al
+        correo del usuario.
+      operationId: resend_credentials_api_v1_usuarios__user_id__reenviar_credenciales_post
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: user_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: User Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/establecimientos/tipos-habitacion:
+    get:
+      tags:
+      - Establecimientos y Capacidad
+      summary: Listar tipos de habitación disponibles
+      description: Retorna el catálogo estándar de tipos de habitación (suite, matrimonial,
+        simple, etc.).
+      operationId: list_tipos_habitacion_api_v1_establecimientos_tipos_habitacion_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/TipoHabitacionResponse'
+                type: array
+                title: Response List Tipos Habitacion Api V1 Establecimientos Tipos
+                  Habitacion Get
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/establecimientos/mi-establecimiento:
+    get:
+      tags:
+      - Establecimientos y Capacidad
+      summary: Obtener ficha técnica del establecimiento del usuario en sesión
+      description: Retorna la ficha técnica y capacidad del establecimiento al que
+        pertenece el usuario.
+      operationId: get_mi_establecimiento_api_v1_establecimientos_mi_establecimiento_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EstablecimientoResponse'
+      security:
+      - OAuth2PasswordBearer: []
+    patch:
+      tags:
+      - Establecimientos y Capacidad
+      summary: Actualizar datos del establecimiento propio (contacto o plazas manuales)
+      description: Permite al operador o dependiente actualizar datos de contacto
+        y total_plazas manual.
+      operationId: update_mi_establecimiento_api_v1_establecimientos_mi_establecimiento_patch
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EstablecimientoUpdate'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EstablecimientoResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/establecimientos/mi-establecimiento/capacidad:
+    put:
+      tags:
+      - Establecimientos y Capacidad
+      summary: Configurar capacidad instalada por tipo de habitación
+      description: 'Configura el desglose de habitaciones por tipo (cant_habitaciones,
+        nro_camas)
+
+        y recalcula automáticamente total_habitaciones según RN-2.
+
+        Restringido al OPERADOR_HOSPEDAJE del establecimiento.'
+      operationId: update_capacidad_habitaciones_api_v1_establecimientos_mi_establecimiento_capacidad_put
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CapacidadHabitacionesUpdate'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EstablecimientoResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/establecimientos/mi-establecimiento/dependientes:
+    get:
+      tags:
+      - Establecimientos y Capacidad
+      summary: Listar dependientes del propio establecimiento
+      description: Lista exclusivamente los usuarios con rol DEPENDIENTE_HOSPEDAJE
+        pertenecientes a su establecimiento.
+      operationId: list_mis_dependientes_api_v1_establecimientos_mi_establecimiento_dependientes_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/UserResponse'
+                type: array
+                title: Response List Mis Dependientes Api V1 Establecimientos Mi Establecimiento
+                  Dependientes Get
+      security:
+      - OAuth2PasswordBearer: []
+    post:
+      tags:
+      - Establecimientos y Capacidad
+      summary: Registrar un nuevo dependiente en el establecimiento propio
+      description: 'Crea un nuevo usuario dependiente (personal de apoyo para carga
+        de formularios).
+
+        Se asocia automáticamente al establecimiento del operador y se le envían credenciales
+        por correo.'
+      operationId: create_dependiente_api_v1_establecimientos_mi_establecimiento_dependientes_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DependienteCreate'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/establecimientos/mi-establecimiento/dependientes/{dependiente_id}:
+    patch:
+      tags:
+      - Establecimientos y Capacidad
+      summary: Actualizar o habilitar/deshabilitar dependiente propio
+      description: 'Permite al operador modificar el estado activo o datos de un dependiente
+        de su propio establecimiento.
+
+        Garantiza aislamiento: no permite modificar dependientes de otros establecimientos.'
+      operationId: update_dependiente_api_v1_establecimientos_mi_establecimiento_dependientes__dependiente_id__patch
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: dependiente_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Dependiente Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DependienteUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/establecimientos/:
+    post:
+      tags:
+      - Establecimientos y Capacidad
+      summary: Registrar establecimiento y su operador titular (Admin Departamental)
+      description: 'Registra un nuevo establecimiento de hospedaje junto con su usuario
+        OPERADOR_HOSPEDAJE inicial.
+
+        Envía de manera automática las credenciales al operador y vincula ambos registros.'
+      operationId: create_establecimiento_api_v1_establecimientos__post
+      security:
+      - OAuth2PasswordBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EstablecimientoCreateConOperador'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EstablecimientoResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    get:
+      tags:
+      - Establecimientos y Capacidad
+      summary: Listar todos los establecimientos departamentales
+      description: Retorna la lista consolidada de establecimientos con filtros por
+        categoría y búsqueda.
+      operationId: list_establecimientos_api_v1_establecimientos__get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: skip
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+          title: Skip
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 50
+          title: Limit
+      - name: categoria
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Categoria
+      - name: solo_activos
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Solo Activos
+      - name: buscar
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Buscar
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EstablecimientoResponse'
+                title: Response List Establecimientos Api V1 Establecimientos  Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/establecimientos/{establecimiento_id}:
+    get:
+      tags:
+      - Establecimientos y Capacidad
+      summary: Obtener detalle de un establecimiento por ID
+      description: Obtiene la información técnica detallada de un establecimiento.
+      operationId: get_establecimiento_por_id_api_v1_establecimientos__establecimiento_id__get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: establecimiento_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Establecimiento Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EstablecimientoResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    patch:
+      tags:
+      - Establecimientos y Capacidad
+      summary: Actualizar datos de un establecimiento por ID
+      description: Actualiza datos generales de un establecimiento existente.
+      operationId: update_establecimiento_por_id_api_v1_establecimientos__establecimiento_id__patch
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: establecimiento_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Establecimiento Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EstablecimientoUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EstablecimientoResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/nacionalidades/:
+    get:
+      tags:
+      - Catálogo de Nacionalidades
+      summary: Listar nacionalidades con filtros y búsqueda
+      description: 'Retorna el catálogo de nacionalidades y países con opciones de
+        búsqueda y paginación.
+
+        Accesible para todos los usuarios autenticados (Administradores, Operadores
+        y Dependientes).'
+      operationId: listar_nacionalidades_api_v1_nacionalidades__get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: skip
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          description: Número de registros a omitir para paginación
+          default: 0
+          title: Skip
+        description: Número de registros a omitir para paginación
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 500
+          minimum: 1
+          description: Cantidad máxima de registros a retornar
+          default: 200
+          title: Limit
+        description: Cantidad máxima de registros a retornar
+      - name: search
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Término de búsqueda por nombre de país o código
+          title: Search
+        description: Término de búsqueda por nombre de país o código
+      - name: continente
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Filtrar por continente o región geográfica
+          title: Continente
+        description: Filtrar por continente o región geográfica
+      - name: solo_activos
+        in: query
+        required: false
+        schema:
+          type: boolean
+          description: Filtrar solo nacionalidades activas
+          default: true
+          title: Solo Activos
+        description: Filtrar solo nacionalidades activas
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/NacionalidadResponse'
+                title: Response Listar Nacionalidades Api V1 Nacionalidades  Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    post:
+      tags:
+      - Catálogo de Nacionalidades
+      summary: Registrar una nueva nacionalidad (Solo Administrador)
+      description: Permite al Administrador Departamental dar de alta una nueva nacionalidad
+        o procedencia.
+      operationId: crear_nacionalidad_api_v1_nacionalidades__post
+      security:
+      - OAuth2PasswordBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NacionalidadCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NacionalidadResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/nacionalidades/{id}:
+    get:
+      tags:
+      - Catálogo de Nacionalidades
+      summary: Consultar nacionalidad por ID
+      description: Obtiene el detalle completo de una nacionalidad específica a partir
+        de su ID.
+      operationId: obtener_nacionalidad_por_id_api_v1_nacionalidades__id__get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NacionalidadResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    patch:
+      tags:
+      - Catálogo de Nacionalidades
+      summary: Actualizar parcialmente una nacionalidad (Solo Administrador)
+      description: Permite al Administrador Departamental actualizar nombre, código
+        o estado de una nacionalidad.
+      operationId: actualizar_nacionalidad_api_v1_nacionalidades__id__patch
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NacionalidadUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NacionalidadResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+      - Catálogo de Nacionalidades
+      summary: Deshabilitar nacionalidad (Soft delete) (Solo Administrador)
+      description: Deshabilita lógicamente una nacionalidad para preservar integridad
+        referencial estadística.
+      operationId: eliminar_nacionalidad_api_v1_nacionalidades__id__delete
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Id
+      - name: hard_delete
+        in: query
+        required: false
+        schema:
+          type: boolean
+          description: Si es True, elimina físicamente el registro
+          default: false
+          title: Hard Delete
+        description: Si es True, elimina físicamente el registro
+      responses:
+        '204':
+          description: Successful Response
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/nacionalidades/codigo/{cod_pais}:
+    get:
+      tags:
+      - Catálogo de Nacionalidades
+      summary: Consultar nacionalidad por código ISO o código especial
+      description: 'Obtiene el registro de una nacionalidad mediante su código oficial
+        (ej: ''BO'', ''US'', ''XAM'').'
+      operationId: obtener_nacionalidad_por_codigo_api_v1_nacionalidades_codigo__cod_pais__get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: cod_pais
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Cod Pais
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NacionalidadResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/nacionalidades/seed:
+    post:
+      tags:
+      - Catálogo de Nacionalidades
+      summary: Poblar catálogo con países oficiales y formulario departamental (Solo
+        Administrador)
+      description: 'Ejecuta el proceso de seeding idempotente con el catálogo oficial
+        de países
+
+        del formulario PDHO de Oruro y cobertura mundial.'
+      operationId: poblar_catalogo_nacionalidades_api_v1_nacionalidades_seed_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NacionalidadSeedSummary'
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/formularios/periodos-disponibles:
+    get:
+      tags:
+      - Formularios Hoteleros (Digitalización y Operativa)
+      summary: Obtener meses y días según calendario real y períodos permitidos
+      description: 'Retorna la lista de los 12 meses para la gestión seleccionada
+        con:
+
+        - Cantidad real de días según calendario (considerando años bisiestos).
+
+        - Estado ''declarado'' (si el establecimiento ya cargó el formulario en ese
+        período).
+
+        - Estado ''permitido'' (true solo si es un mes anterior a la fecha actual
+        y no fue declarado aún).'
+      operationId: obtener_periodos_disponibles_api_v1_formularios_periodos_disponibles_get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: gestion
+        in: query
+        required: true
+        schema:
+          type: integer
+          description: 'Año o gestión a consultar (ej: 2026, 2025)'
+          title: Gestion
+        description: 'Año o gestión a consultar (ej: 2026, 2025)'
+      - name: tipo_formulario
+        in: query
+        required: false
+        schema:
+          type: string
+          description: '''estadistica'' u ''ocupacion'''
+          default: estadistica
+          title: Tipo Formulario
+        description: '''estadistica'' u ''ocupacion'''
+      - name: id_establecimiento
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: ID de establecimiento (solo Admin)
+          title: Id Establecimiento
+        description: ID de establecimiento (solo Admin)
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PeriodosDisponiblesResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/formularios/subir-respaldo:
+    post:
+      tags:
+      - Formularios Hoteleros (Digitalización y Operativa)
+      summary: Subir fotografía de respaldo y convertir internamente a PDF
+      description: 'Guarda la fotografía original y genera internamente un PDF compacto
+        optimizado para respaldo.
+
+        Retorna las rutas para asociarlas a la creación o actualización manual del
+        formulario.'
+      operationId: subir_respaldo_general_api_v1_formularios_subir_respaldo_post
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: tipo_formulario
+        in: query
+        required: false
+        schema:
+          type: string
+          description: 'Tipo: ''estadistica'' u ''ocupacion'''
+          default: formulario
+          title: Tipo Formulario
+        description: 'Tipo: ''estadistica'' u ''ocupacion'''
+      - name: id_establecimiento
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: ID de establecimiento (solo Admin)
+          title: Id Establecimiento
+        description: ID de establecimiento (solo Admin)
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Body_subir_respaldo_general_api_v1_formularios_subir_respaldo_post'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespaldoAdjuntoResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/estadisticas-hoteleras/:
+    post:
+      tags:
+      - Formularios Hoteleros (Digitalización y Operativa)
+      summary: Crear declaración de Estadísticas Hoteleras desde cero
+      description: 'Crea la declaración de Estadísticas Hoteleras desde cero.
+
+        El usuario elige la fecha/período, carga los huéspedes hospedados y opcionalmente
+        adjunta el respaldo.
+
+        Mapea automáticamente Secciones A y C, calcula las sumatorias del resumen
+        y persiste en estado ENVIADO.'
+      operationId: crear_estadistica_hotelera_api_v1_estadisticas_hoteleras__post
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: id_establecimiento
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: ID de establecimiento (solo para Admin)
+          title: Id Establecimiento
+        description: ID de establecimiento (solo para Admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EstadisticaHoteleraCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EstadisticaHoteleraResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    get:
+      tags:
+      - Formularios Hoteleros (Digitalización y Operativa)
+      summary: Listar declaraciones de Estadísticas Hoteleras
+      description: Listado paginado con filtros. Aislamiento multi-tenant por establecimiento.
+      operationId: listar_estadisticas_api_v1_estadisticas_hoteleras__get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: mes
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Mes
+      - name: gestion
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Gestion
+      - name: estado
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - $ref: '#/components/schemas/EstadoFormulario'
+          - type: 'null'
+          title: Estado
+      - name: id_establecimiento
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Id Establecimiento
+      - name: skip
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+          title: Skip
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 50
+          title: Limit
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EstadisticaHoteleraResponse'
+                title: Response Listar Estadisticas Api V1 Estadisticas Hoteleras  Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/estadisticas-hoteleras/{id}:
+    put:
+      tags:
+      - Formularios Hoteleros (Digitalización y Operativa)
+      summary: Actualizar o editar declaración de Estadísticas Hoteleras
+      description: Permite al operador o dependiente modificar o corregir datos del
+        formulario cargado.
+      operationId: actualizar_estadistica_api_v1_estadisticas_hoteleras__id__put
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EstadisticaHoteleraUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EstadisticaHoteleraResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    get:
+      tags:
+      - Formularios Hoteleros (Digitalización y Operativa)
+      summary: Obtener detalle de formulario de Estadísticas Hoteleras
+      description: Obtiene el formulario por ID incluyendo secciones A y C mapeadas
+        y matriz de nacionalidades.
+      operationId: obtener_estadistica_api_v1_estadisticas_hoteleras__id__get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EstadisticaHoteleraResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/estadisticas-hoteleras/{id}/respaldo:
+    post:
+      tags:
+      - Formularios Hoteleros (Digitalización y Operativa)
+      summary: Adjuntar fotografía de respaldo a una declaración existente y convertir
+        a PDF
+      description: Sube la foto física como respaldo documental para el formulario
+        y genera internamente el PDF.
+      operationId: adjuntar_respaldo_estadistica_api_v1_estadisticas_hoteleras__id__respaldo_post
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Id
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Body_adjuntar_respaldo_estadistica_api_v1_estadisticas_hoteleras__id__respaldo_post'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EstadisticaHoteleraResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/estadisticas-hoteleras/procesar-imagen:
+    post:
+      tags:
+      - Formularios Hoteleros (Digitalización y Operativa)
+      summary: Cargar foto del formulario de Estadísticas Hoteleras y extraer borrador
+        (Opcional)
+      description: Endpoint opcional para previsualización.
+      operationId: procesar_imagen_estadistica_api_v1_estadisticas_hoteleras_procesar_imagen_post
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: id_establecimiento
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: ID de establecimiento (solo para Admin)
+          title: Id Establecimiento
+        description: ID de establecimiento (solo para Admin)
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Body_procesar_imagen_estadistica_api_v1_estadisticas_hoteleras_procesar_imagen_post'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EstadisticaHoteleraPreviewResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/ocupacion-hotelera/:
+    post:
+      tags:
+      - Formularios Hoteleros (Digitalización y Operativa)
+      summary: Crear declaración de Ocupación Hotelera desde cero
+      description: 'Crea la declaración de Ocupación Hotelera desde cero.
+
+        El usuario elige la fecha/período y carga las habitaciones ocupadas y personas
+        por noche.
+
+        Valida contra la capacidad total del establecimiento y guarda en estado ENVIADO.'
+      operationId: crear_ocupacion_hotelera_api_v1_ocupacion_hotelera__post
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: id_establecimiento
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: ID de establecimiento (solo para Admin)
+          title: Id Establecimiento
+        description: ID de establecimiento (solo para Admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OcupacionHoteleraCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OcupacionHoteleraResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    get:
+      tags:
+      - Formularios Hoteleros (Digitalización y Operativa)
+      summary: Listar declaraciones de Ocupación Hotelera
+      description: Listado de declaraciones de ocupación con filtros.
+      operationId: listar_ocupaciones_api_v1_ocupacion_hotelera__get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: mes
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Mes
+      - name: gestion
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Gestion
+      - name: estado
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - $ref: '#/components/schemas/EstadoFormulario'
+          - type: 'null'
+          title: Estado
+      - name: id_establecimiento
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Id Establecimiento
+      - name: skip
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+          title: Skip
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 50
+          title: Limit
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OcupacionHoteleraResponse'
+                title: Response Listar Ocupaciones Api V1 Ocupacion Hotelera  Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/ocupacion-hotelera/{id}:
+    put:
+      tags:
+      - Formularios Hoteleros (Digitalización y Operativa)
+      summary: Actualizar o editar declaración de Ocupación Hotelera
+      description: Permite al operador o dependiente modificar o corregir datos de
+        la ocupación hotelera.
+      operationId: actualizar_ocupacion_api_v1_ocupacion_hotelera__id__put
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OcupacionHoteleraUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OcupacionHoteleraResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    get:
+      tags:
+      - Formularios Hoteleros (Digitalización y Operativa)
+      summary: Obtener detalle de formulario de Ocupación Hotelera
+      description: Obtiene el formulario de ocupación por ID con sus registros diarios.
+      operationId: obtener_ocupacion_api_v1_ocupacion_hotelera__id__get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OcupacionHoteleraResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/ocupacion-hotelera/{id}/respaldo:
+    post:
+      tags:
+      - Formularios Hoteleros (Digitalización y Operativa)
+      summary: Adjuntar fotografía de respaldo a la ocupación y convertir a PDF
+      description: Sube la foto física como respaldo documental para ocupación y genera
+        internamente el PDF.
+      operationId: adjuntar_respaldo_ocupacion_api_v1_ocupacion_hotelera__id__respaldo_post
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Id
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Body_adjuntar_respaldo_ocupacion_api_v1_ocupacion_hotelera__id__respaldo_post'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OcupacionHoteleraResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/ocupacion-hotelera/procesar-imagen:
+    post:
+      tags:
+      - Formularios Hoteleros (Digitalización y Operativa)
+      summary: Cargar foto del formulario de Ocupación Hotelera y extraer borrador
+        (Opcional)
+      description: Endpoint opcional para previsualización.
+      operationId: procesar_imagen_ocupacion_api_v1_ocupacion_hotelera_procesar_imagen_post
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: id_establecimiento
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: ID de establecimiento (solo para Admin)
+          title: Id Establecimiento
+        description: ID de establecimiento (solo para Admin)
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Body_procesar_imagen_ocupacion_api_v1_ocupacion_hotelera_procesar_imagen_post'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OcupacionHoteleraPreviewResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/reportes/graficos/nacionales-extranjeros:
+    get:
+      tags:
+      - Módulo Administrativo y Reportes Estadísticos
+      summary: 'Gráfico de torta: Huéspedes nacionales vs extranjeros'
+      description: 'Genera la distribución porcentual y absoluta entre huéspedes bolivianos
+        y extranjeros.
+
+        Permite filtrar por rango de días exactos, por mes/gestión, por año único
+        o por rango de años.'
+      operationId: grafico_nacionales_extranjeros_api_v1_reportes_graficos_nacionales_extranjeros_get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: fecha_inicio
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          description: Fecha inicio para filtro por días exactos
+          title: Fecha Inicio
+        description: Fecha inicio para filtro por días exactos
+      - name: fecha_fin
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          description: Fecha fin para filtro por días exactos
+          title: Fecha Fin
+        description: Fecha fin para filtro por días exactos
+      - name: mes
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: 'Nombre del mes en español (ej: ''septiembre'')'
+          title: Mes
+        description: 'Nombre del mes en español (ej: ''septiembre'')'
+      - name: gestion
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: 'Año o gestión a consultar (ej: 2026)'
+          title: Gestion
+        description: 'Año o gestión a consultar (ej: 2026)'
+      - name: gestion_inicio
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: Año inicial para rango de gestiones
+          title: Gestion Inicio
+        description: Año inicial para rango de gestiones
+      - name: gestion_fin
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: Año final para rango de gestiones
+          title: Gestion Fin
+        description: Año final para rango de gestiones
+      - name: id_establecimiento
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: ID de establecimiento (Solo Admin)
+          title: Id Establecimiento
+        description: ID de establecimiento (Solo Admin)
+      - name: categoria
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Categoría de hospedaje
+          title: Categoria
+        description: Categoría de hospedaje
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GraficoTortaNacionalesExtranjerosResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/reportes/graficos/nacionalidades-ranking:
+    get:
+      tags:
+      - Módulo Administrativo y Reportes Estadísticos
+      summary: 'Gráfico de barras: Top 10 nacionalidades con más afluencia y resto'
+      description: 'Retorna el listado de las 10 nacionalidades con más afluencia
+        en el período y provee
+
+        el listado de la posición 11 en adelante (resto), permitiendo seleccionar
+        países específicos
+
+        si el administrador requiere un análisis enfocado.'
+      operationId: grafico_ranking_nacionalidades_api_v1_reportes_graficos_nacionalidades_ranking_get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: fecha_inicio
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          description: Fecha inicio para filtro por días exactos
+          title: Fecha Inicio
+        description: Fecha inicio para filtro por días exactos
+      - name: fecha_fin
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          description: Fecha fin para filtro por días exactos
+          title: Fecha Fin
+        description: Fecha fin para filtro por días exactos
+      - name: mes
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: 'Nombre del mes en español (ej: ''septiembre'')'
+          title: Mes
+        description: 'Nombre del mes en español (ej: ''septiembre'')'
+      - name: gestion
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: 'Año o gestión a consultar (ej: 2026)'
+          title: Gestion
+        description: 'Año o gestión a consultar (ej: 2026)'
+      - name: gestion_inicio
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: Año inicial para rango de gestiones
+          title: Gestion Inicio
+        description: Año inicial para rango de gestiones
+      - name: gestion_fin
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: Año final para rango de gestiones
+          title: Gestion Fin
+        description: Año final para rango de gestiones
+      - name: id_establecimiento
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: ID de establecimiento (Solo Admin)
+          title: Id Establecimiento
+        description: ID de establecimiento (Solo Admin)
+      - name: categoria
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Categoría de hospedaje
+          title: Categoria
+        description: Categoría de hospedaje
+      - name: paises_ids
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: integer
+          - type: 'null'
+          description: IDs de países específicos a visualizar
+          title: Paises Ids
+        description: IDs de países específicos a visualizar
+      - name: codigos_pais
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+          - type: 'null'
+          description: 'Códigos ISO de países específicos a visualizar (ej: BO, AR)'
+          title: Codigos Pais
+        description: 'Códigos ISO de países específicos a visualizar (ej: BO, AR)'
+      - name: incluir_resto
+        in: query
+        required: false
+        schema:
+          type: boolean
+          description: Si es True, incluye la información del puesto 11 en adelante
+          default: true
+          title: Incluir Resto
+        description: Si es True, incluye la información del puesto 11 en adelante
+      - name: skip_resto
+        in: query
+        required: false
+        schema:
+          type: integer
+          description: Desplazamiento para paginar el resto de países (del 11 en adelante)
+          default: 0
+          title: Skip Resto
+        description: Desplazamiento para paginar el resto de países (del 11 en adelante)
+      - name: limit_resto
+        in: query
+        required: false
+        schema:
+          type: integer
+          description: Límite de registros para la cola del ranking
+          default: 50
+          title: Limit Resto
+        description: Límite de registros para la cola del ranking
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GraficoBarrasRankingResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/reportes/graficos/permanencias-vs-ingresos:
+    get:
+      tags:
+      - Módulo Administrativo y Reportes Estadísticos
+      summary: Comparativa de permanencias (pernoctaciones) vs llegadas (ingresos)
+      description: 'Compara pernoctaciones vs llegadas para un país particular o un
+        rango/grupo de países seleccionados.
+
+        Calcula el promedio de noches de permanencia por huésped para evaluar la estancia
+        turística media.'
+      operationId: grafico_permanencias_vs_ingresos_api_v1_reportes_graficos_permanencias_vs_ingresos_get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: fecha_inicio
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          description: Fecha inicio para filtro por días exactos
+          title: Fecha Inicio
+        description: Fecha inicio para filtro por días exactos
+      - name: fecha_fin
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          description: Fecha fin para filtro por días exactos
+          title: Fecha Fin
+        description: Fecha fin para filtro por días exactos
+      - name: mes
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: 'Nombre del mes en español (ej: ''septiembre'')'
+          title: Mes
+        description: 'Nombre del mes en español (ej: ''septiembre'')'
+      - name: gestion
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: 'Año o gestión a consultar (ej: 2026)'
+          title: Gestion
+        description: 'Año o gestión a consultar (ej: 2026)'
+      - name: gestion_inicio
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: Año inicial para rango de gestiones
+          title: Gestion Inicio
+        description: Año inicial para rango de gestiones
+      - name: gestion_fin
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: Año final para rango de gestiones
+          title: Gestion Fin
+        description: Año final para rango de gestiones
+      - name: id_establecimiento
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: ID de establecimiento (Solo Admin)
+          title: Id Establecimiento
+        description: ID de establecimiento (Solo Admin)
+      - name: categoria
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Categoría de hospedaje
+          title: Categoria
+        description: Categoría de hospedaje
+      - name: id_nacionalidad
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: ID de un país individual a analizar
+          title: Id Nacionalidad
+        description: ID de un país individual a analizar
+      - name: cod_pais
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: 'Código ISO de un país individual (ej: BO o AR)'
+          title: Cod Pais
+        description: 'Código ISO de un país individual (ej: BO o AR)'
+      - name: paises_ids
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: integer
+          - type: 'null'
+          description: Lista de IDs de países
+          title: Paises Ids
+        description: Lista de IDs de países
+      - name: codigos_pais
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+          - type: 'null'
+          description: Lista de códigos ISO de países
+          title: Codigos Pais
+        description: Lista de códigos ISO de países
+      - name: agrupar_por
+        in: query
+        required: false
+        schema:
+          type: string
+          description: '''pais'' (compara países) o ''tiempo'' (evolución temporal)'
+          default: pais
+          title: Agrupar Por
+        description: '''pais'' (compara países) o ''tiempo'' (evolución temporal)'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermanenciasVsIngresosResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/reportes/tablero-ejecutivo:
+    get:
+      tags:
+      - Módulo Administrativo y Reportes Estadísticos
+      summary: 'Tablero ejecutivo: KPIs consolidados y tasa de ocupación departamental'
+      description: 'Retorna los indicadores de alto nivel institucional:
+
+        - Cobertura de establecimientos declarantes.
+
+        - Total de llegadas y pernoctaciones.
+
+        - Tasa de ocupación ponderada departamental (%).
+
+        - Estancia media en noches por visitante.'
+      operationId: tablero_ejecutivo_api_v1_reportes_tablero_ejecutivo_get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: fecha_inicio
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          description: Fecha inicio
+          title: Fecha Inicio
+        description: Fecha inicio
+      - name: fecha_fin
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          description: Fecha fin
+          title: Fecha Fin
+        description: Fecha fin
+      - name: mes
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Nombre del mes
+          title: Mes
+        description: Nombre del mes
+      - name: gestion
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: Gestión
+          title: Gestion
+        description: Gestión
+      - name: gestion_inicio
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: Gestión inicio
+          title: Gestion Inicio
+        description: Gestión inicio
+      - name: gestion_fin
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: Gestión fin
+          title: Gestion Fin
+        description: Gestión fin
+      - name: id_establecimiento
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: ID de establecimiento (Solo Admin)
+          title: Id Establecimiento
+        description: ID de establecimiento (Solo Admin)
+      - name: categoria
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Categoría
+          title: Categoria
+        description: Categoría
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TableroEjecutivoResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/reportes/cumplimiento-declaraciones:
+    get:
+      tags:
+      - Módulo Administrativo y Reportes Estadísticos
+      summary: 'Bitácora de cumplimiento: Control de presentaciones mensuales'
+      description: 'Listado centralizado para la administración departamental donde
+        se verifica
+
+        qué establecimientos ya enviaron sus formularios de estadísticas y ocupación,
+
+        y cuáles permanecen pendientes u omisos.'
+      operationId: cumplimiento_declaraciones_api_v1_reportes_cumplimiento_declaraciones_get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: mes
+        in: query
+        required: true
+        schema:
+          type: string
+          description: 'Nombre del mes en español (ej: ''septiembre'')'
+          title: Mes
+        description: 'Nombre del mes en español (ej: ''septiembre'')'
+      - name: gestion
+        in: query
+        required: true
+        schema:
+          type: integer
+          description: 'Año a consultar (ej: 2026)'
+          title: Gestion
+        description: 'Año a consultar (ej: 2026)'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CumplimientoDeclaracionesResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/reportes/exportar/csv:
+    get:
+      tags:
+      - Módulo Administrativo y Reportes Estadísticos
+      summary: Descargar reporte consolidado en formato CSV
+      description: Genera y descarga un archivo CSV estructurado con codificación
+        UTF-8 compatible con Microsoft Excel.
+      operationId: exportar_reporte_csv_api_v1_reportes_exportar_csv_get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: mes
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Mes
+          title: Mes
+        description: Mes
+      - name: gestion
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: Gestión
+          title: Gestion
+        description: Gestión
+      - name: gestion_inicio
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: Gestión inicial
+          title: Gestion Inicio
+        description: Gestión inicial
+      - name: gestion_fin
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: Gestión final
+          title: Gestion Fin
+        description: Gestión final
+      - name: id_establecimiento
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: ID de establecimiento
+          title: Id Establecimiento
+        description: ID de establecimiento
+      - name: categoria
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Categoría
+          title: Categoria
+        description: Categoría
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/openapi.yaml:
+    get:
+      tags:
+      - Documentación OpenAPI
+      summary: Especificación OpenAPI en formato YAML
+      description: 'Retorna la especificación OpenAPI 3.1 completa en formato YAML
+        con todos los esquemas,
+
+        rutas, request bodies, respuestas y parámetros para consumo del equipo de
+        frontend.'
+      operationId: get_openapi_yaml_api_v1_openapi_yaml_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  /api/v1/openapi.yaml/download:
+    get:
+      tags:
+      - Documentación OpenAPI
+      summary: Descargar archivo openapi.yaml
+      description: 'Descarga directamente el archivo ''openapi_pdho.yaml'' para compartirlo
+        o importarlo
+
+        en Postman, Swagger Editor, Insomnia o herramientas de generación de código
+        en Angular.'
+      operationId: download_openapi_yaml_api_v1_openapi_yaml_download_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  /api/v1/health:
+    get:
+      tags:
+      - Salud
+      summary: Health Check
+      description: Endpoint de verificación de estado y disponibilidad del servicio.
+      operationId: health_check_api_v1_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+components:
+  schemas:
+    Body_adjuntar_respaldo_estadistica_api_v1_estadisticas_hoteleras__id__respaldo_post:
+      properties:
+        file:
+          type: string
+          contentMediaType: application/octet-stream
+          title: File
+          description: Foto del formulario físico de respaldo
+      type: object
+      required:
+      - file
+      title: Body_adjuntar_respaldo_estadistica_api_v1_estadisticas_hoteleras__id__respaldo_post
+    Body_adjuntar_respaldo_ocupacion_api_v1_ocupacion_hotelera__id__respaldo_post:
+      properties:
+        file:
+          type: string
+          contentMediaType: application/octet-stream
+          title: File
+          description: Foto del formulario físico de ocupación
+      type: object
+      required:
+      - file
+      title: Body_adjuntar_respaldo_ocupacion_api_v1_ocupacion_hotelera__id__respaldo_post
+    Body_procesar_imagen_estadistica_api_v1_estadisticas_hoteleras_procesar_imagen_post:
+      properties:
+        file:
+          type: string
+          contentMediaType: application/octet-stream
+          title: File
+          description: Fotografía del formulario 'ESTADÍSTICAS HOTELERAS'
+      type: object
+      required:
+      - file
+      title: Body_procesar_imagen_estadistica_api_v1_estadisticas_hoteleras_procesar_imagen_post
+    Body_procesar_imagen_ocupacion_api_v1_ocupacion_hotelera_procesar_imagen_post:
+      properties:
+        file:
+          type: string
+          contentMediaType: application/octet-stream
+          title: File
+          description: Fotografía del formulario 'OCUPACIÓN HOTELERA'
+      type: object
+      required:
+      - file
+      title: Body_procesar_imagen_ocupacion_api_v1_ocupacion_hotelera_procesar_imagen_post
+    Body_subir_respaldo_general_api_v1_formularios_subir_respaldo_post:
+      properties:
+        file:
+          type: string
+          contentMediaType: application/octet-stream
+          title: File
+          description: Foto o escaneo de la planilla física
+      type: object
+      required:
+      - file
+      title: Body_subir_respaldo_general_api_v1_formularios_subir_respaldo_post
+    CapacidadHabitacionesUpdate:
+      properties:
+        habitaciones:
+          items:
+            $ref: '#/components/schemas/HabitacionItemInput'
+          type: array
+          title: Habitaciones
+          description: Lista de tipos de habitaciones y sus cantidades para actualizar
+            la capacidad instalada.
+      type: object
+      required:
+      - habitaciones
+      title: CapacidadHabitacionesUpdate
+    CumplimientoDeclaracionesResponse:
+      properties:
+        mes:
+          type: string
+          title: Mes
+        gestion:
+          type: integer
+          title: Gestion
+        total_establecimientos:
+          type: integer
+          title: Total Establecimientos
+        total_al_dia:
+          type: integer
+          title: Total Al Dia
+        total_pendientes:
+          type: integer
+          title: Total Pendientes
+        porcentaje_cumplimiento:
+          type: number
+          title: Porcentaje Cumplimiento
+        establecimientos:
+          items:
+            $ref: '#/components/schemas/EstablecimientoCumplimientoItem'
+          type: array
+          title: Establecimientos
+      type: object
+      required:
+      - mes
+      - gestion
+      - total_establecimientos
+      - total_al_dia
+      - total_pendientes
+      - porcentaje_cumplimiento
+      - establecimientos
+      title: CumplimientoDeclaracionesResponse
+      description: Reporte administrativo de cumplimiento y omisión de declaraciones.
+    DependienteCreate:
+      properties:
+        nombre_completo:
+          type: string
+          maxLength: 150
+          minLength: 3
+          title: Nombre Completo
+        email:
+          type: string
+          format: email
+          title: Email
+        password:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Password
+          description: Contraseña inicial del dependiente. Si se omite, se generará
+            una automáticamente.
+      type: object
+      required:
+      - nombre_completo
+      - email
+      title: DependienteCreate
+    DependienteUpdate:
+      properties:
+        nombre_completo:
+          anyOf:
+          - type: string
+            maxLength: 150
+            minLength: 3
+          - type: 'null'
+          title: Nombre Completo
+        email:
+          anyOf:
+          - type: string
+            format: email
+          - type: 'null'
+          title: Email
+        activo:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Activo
+      type: object
+      title: DependienteUpdate
+    DetalleEstadisticaInput:
+      properties:
+        dia:
+          type: integer
+          maximum: 31.0
+          minimum: 1.0
+          title: Dia
+          description: Día del mes (1 al 31)
+        id_nacionalidad:
+          type: integer
+          title: Id Nacionalidad
+          description: ID de la nacionalidad
+        cant_ingresos:
+          type: integer
+          minimum: 0.0
+          title: Cant Ingresos
+          description: Cantidad de ingresos (I)
+          default: 0
+        cant_permanencias:
+          type: integer
+          minimum: 0.0
+          title: Cant Permanencias
+          description: Cantidad de permanencias (P)
+          default: 0
+      type: object
+      required:
+      - dia
+      - id_nacionalidad
+      title: DetalleEstadisticaInput
+      description: Celda con movimiento diario por nacionalidad para la matriz dinámica.
+    DetalleEstadisticaResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        dia:
+          type: integer
+          title: Dia
+        id_nacionalidad:
+          type: integer
+          title: Id Nacionalidad
+        pais:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Pais
+        cod_pais:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Cod Pais
+        cant_ingresos:
+          type: integer
+          title: Cant Ingresos
+        cant_permanencias:
+          type: integer
+          title: Cant Permanencias
+      type: object
+      required:
+      - id
+      - dia
+      - id_nacionalidad
+      - cant_ingresos
+      - cant_permanencias
+      title: DetalleEstadisticaResponse
+    DetalleOcupacionInput:
+      properties:
+        dia:
+          type: integer
+          maximum: 31.0
+          minimum: 1.0
+          title: Dia
+        hab_ocupadas:
+          type: integer
+          minimum: 0.0
+          title: Hab Ocupadas
+          description: Habitaciones ocupadas por noche
+          default: 0
+        cant_personas:
+          type: integer
+          minimum: 0.0
+          title: Cant Personas
+          description: Número de personas que las ocuparon
+          default: 0
+      type: object
+      required:
+      - dia
+      title: DetalleOcupacionInput
+      description: Registro diario para el formulario de Ocupación Hotelera.
+    DetalleOcupacionResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        dia:
+          type: integer
+          title: Dia
+        hab_ocupadas:
+          type: integer
+          title: Hab Ocupadas
+        cant_personas:
+          type: integer
+          title: Cant Personas
+      type: object
+      required:
+      - id
+      - dia
+      - hab_ocupadas
+      - cant_personas
+      title: DetalleOcupacionResponse
+    EstablecimientoCreateConOperador:
+      properties:
+        nombre_establecimiento:
+          type: string
+          maxLength: 150
+          minLength: 3
+          title: Nombre Establecimiento
+        direccion:
+          type: string
+          maxLength: 255
+          minLength: 3
+          title: Direccion
+        categoria:
+          type: string
+          maxLength: 50
+          minLength: 2
+          title: Categoria
+        latitud:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Latitud
+          description: Coordenada geográfica de latitud (GPS)
+        longitud:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Longitud
+          description: Coordenada geográfica de longitud (GPS)
+        telefono:
+          anyOf:
+          - type: string
+            maxLength: 50
+          - type: 'null'
+          title: Telefono
+        total_plazas:
+          type: integer
+          minimum: 0.0
+          title: Total Plazas
+          description: Total de plazas/camas ingresado manualmente por el establecimiento
+            o admin
+          default: 0
+        operador_nombre_completo:
+          type: string
+          maxLength: 150
+          minLength: 3
+          title: Operador Nombre Completo
+        operador_email:
+          type: string
+          format: email
+          title: Operador Email
+        operador_password:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Operador Password
+          description: Contraseña del operador. Si se omite, se generará una automáticamente
+            conforme a AGETIC.
+      type: object
+      required:
+      - nombre_establecimiento
+      - direccion
+      - categoria
+      - operador_nombre_completo
+      - operador_email
+      title: EstablecimientoCreateConOperador
+      description: 'Schema utilizado por ADMIN_DEPARTAMENTAL para registrar simultáneamente
+
+        un establecimiento y su usuario operador/administrador inicial.'
+    EstablecimientoCumplimientoItem:
+      properties:
+        id_establecimiento:
+          type: integer
+          title: Id Establecimiento
+        nombre_establecimiento:
+          type: string
+          title: Nombre Establecimiento
+        categoria:
+          type: string
+          title: Categoria
+        telefono:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Telefono
+        tiene_estadistica:
+          type: boolean
+          title: Tiene Estadistica
+        id_estadistica:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Id Estadistica
+        estado_estadistica:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Estado Estadistica
+        tiene_ocupacion:
+          type: boolean
+          title: Tiene Ocupacion
+        id_ocupacion:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Id Ocupacion
+        estado_ocupacion:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Estado Ocupacion
+        cumplimiento_completo:
+          type: boolean
+          title: Cumplimiento Completo
+      type: object
+      required:
+      - id_establecimiento
+      - nombre_establecimiento
+      - categoria
+      - tiene_estadistica
+      - tiene_ocupacion
+      - cumplimiento_completo
+      title: EstablecimientoCumplimientoItem
+      description: Estado de presentación mensual por establecimiento de hospedaje.
+    EstablecimientoResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        nombre_establecimiento:
+          type: string
+          title: Nombre Establecimiento
+        direccion:
+          type: string
+          title: Direccion
+        categoria:
+          type: string
+          title: Categoria
+        latitud:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Latitud
+        longitud:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Longitud
+        telefono:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Telefono
+        total_habitaciones:
+          type: integer
+          title: Total Habitaciones
+        total_plazas:
+          type: integer
+          title: Total Plazas
+        id_operador:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Id Operador
+        activo:
+          type: boolean
+          title: Activo
+        fecha_registro:
+          type: string
+          format: date-time
+          title: Fecha Registro
+        operador:
+          anyOf:
+          - $ref: '#/components/schemas/UserResponse'
+          - type: 'null'
+        habitaciones:
+          items:
+            $ref: '#/components/schemas/HabitacionResponse'
+          type: array
+          title: Habitaciones
+          default: []
+      type: object
+      required:
+      - id
+      - nombre_establecimiento
+      - direccion
+      - categoria
+      - total_habitaciones
+      - total_plazas
+      - activo
+      - fecha_registro
+      title: EstablecimientoResponse
+    EstablecimientoUpdate:
+      properties:
+        nombre_establecimiento:
+          anyOf:
+          - type: string
+            maxLength: 150
+            minLength: 3
+          - type: 'null'
+          title: Nombre Establecimiento
+        direccion:
+          anyOf:
+          - type: string
+            maxLength: 255
+            minLength: 3
+          - type: 'null'
+          title: Direccion
+        categoria:
+          anyOf:
+          - type: string
+            maxLength: 50
+            minLength: 2
+          - type: 'null'
+          title: Categoria
+        latitud:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Latitud
+        longitud:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Longitud
+        telefono:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Telefono
+        total_plazas:
+          anyOf:
+          - type: integer
+            minimum: 0.0
+          - type: 'null'
+          title: Total Plazas
+        activo:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Activo
+      type: object
+      title: EstablecimientoUpdate
+    EstadisticaHoteleraCreate:
+      properties:
+        numero_formulario:
+          type: string
+          maxLength: 20
+          minLength: 1
+          title: Numero Formulario
+          description: 'Número correlativo (ej: ''000360'')'
+        mes:
+          type: string
+          maxLength: 20
+          minLength: 3
+          title: Mes
+        gestion:
+          type: integer
+          maximum: 2100.0
+          minimum: 2000.0
+          title: Gestion
+        fecha_presentacion:
+          type: string
+          format: date
+          title: Fecha Presentacion
+        cant_emp_perma:
+          type: integer
+          minimum: 0.0
+          title: Cant Emp Perma
+          default: 0
+        cant_emp_event:
+          type: integer
+          minimum: 0.0
+          title: Cant Emp Event
+          default: 0
+        archivo_foto:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Archivo Foto
+        archivo_pdf:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Archivo Pdf
+        detalles:
+          items:
+            $ref: '#/components/schemas/DetalleEstadisticaInput'
+          type: array
+          title: Detalles
+        observaciones:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Observaciones
+        enviar_en_limpio:
+          type: boolean
+          title: Enviar En Limpio
+          description: Si es True, el estado se guarda como ENVIADO; si es False,
+            como BORRADOR
+          default: true
+      type: object
+      required:
+      - numero_formulario
+      - mes
+      - gestion
+      - fecha_presentacion
+      title: EstadisticaHoteleraCreate
+      description: 'Payload definitivo para guardar la declaración de Estadísticas
+        Hoteleras en limpio.
+
+        El usuario puede haber ajustado o corregido cualquiera de estos valores.'
+    EstadisticaHoteleraPreviewResponse:
+      properties:
+        numero_formulario:
+          type: string
+          title: Numero Formulario
+          description: Correlativo detectado en rojo (ej. '000360')
+        mes:
+          type: string
+          title: Mes
+          description: Mes detectado (ej. 'Agosto')
+        gestion:
+          type: integer
+          title: Gestion
+          description: Año / gestión detectada (ej. 2026)
+        fecha_presentacion:
+          type: string
+          format: date
+          title: Fecha Presentacion
+        cant_emp_perma:
+          type: integer
+          title: Cant Emp Perma
+          default: 0
+        cant_emp_event:
+          type: integer
+          title: Cant Emp Event
+          default: 0
+        total_empleados:
+          type: integer
+          title: Total Empleados
+          default: 0
+        archivo_foto:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Archivo Foto
+        archivo_pdf:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Archivo Pdf
+        seccion_a:
+          $ref: '#/components/schemas/SeccionAMapeada'
+        seccion_c:
+          $ref: '#/components/schemas/SeccionCMapeada'
+        matriz_detalles:
+          items:
+            $ref: '#/components/schemas/DetalleEstadisticaInput'
+          type: array
+          title: Matriz Detalles
+          default: []
+        resumen:
+          $ref: '#/components/schemas/ResumenEstadistica'
+        advertencias:
+          items:
+            type: string
+          type: array
+          title: Advertencias
+          default: []
+      type: object
+      required:
+      - numero_formulario
+      - mes
+      - gestion
+      - fecha_presentacion
+      - seccion_a
+      - seccion_c
+      - resumen
+      title: EstadisticaHoteleraPreviewResponse
+      description: 'Respuesta del pipeline de reconocimiento de imagen para Estadísticas
+        Hoteleras.
+
+        Permite al usuario hotelero revisar y editar cada valor antes de enviar en
+        limpio.'
+    EstadisticaHoteleraResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        numero_formulario:
+          type: string
+          title: Numero Formulario
+        id_establecimiento:
+          type: integer
+          title: Id Establecimiento
+        mes:
+          type: string
+          title: Mes
+        gestion:
+          type: integer
+          title: Gestion
+        fecha_presentacion:
+          type: string
+          format: date
+          title: Fecha Presentacion
+        cant_emp_perma:
+          type: integer
+          title: Cant Emp Perma
+        cant_emp_event:
+          type: integer
+          title: Cant Emp Event
+        total_empleados:
+          type: integer
+          title: Total Empleados
+        archivo_foto:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Archivo Foto
+        archivo_pdf:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Archivo Pdf
+        estado:
+          $ref: '#/components/schemas/EstadoFormulario'
+        r_ingreso_nals:
+          type: integer
+          title: R Ingreso Nals
+        r_ingreso_extr:
+          type: integer
+          title: R Ingreso Extr
+        r_permanencia_nals:
+          type: integer
+          title: R Permanencia Nals
+        r_permanencia_extr:
+          type: integer
+          title: R Permanencia Extr
+        total_nals:
+          type: integer
+          title: Total Nals
+        total_extr:
+          type: integer
+          title: Total Extr
+        total_ing:
+          type: integer
+          title: Total Ing
+        total_perm:
+          type: integer
+          title: Total Perm
+        total:
+          type: integer
+          title: Total
+        observaciones:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Observaciones
+        fecha_creacion:
+          type: string
+          format: date-time
+          title: Fecha Creacion
+        fecha_modificacion:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Fecha Modificacion
+        seccion_a:
+          anyOf:
+          - $ref: '#/components/schemas/SeccionAMapeada'
+          - type: 'null'
+        seccion_c:
+          anyOf:
+          - $ref: '#/components/schemas/SeccionCMapeada'
+          - type: 'null'
+        detalles:
+          items:
+            $ref: '#/components/schemas/DetalleEstadisticaResponse'
+          type: array
+          title: Detalles
+          default: []
+      type: object
+      required:
+      - id
+      - numero_formulario
+      - id_establecimiento
+      - mes
+      - gestion
+      - fecha_presentacion
+      - cant_emp_perma
+      - cant_emp_event
+      - total_empleados
+      - estado
+      - r_ingreso_nals
+      - r_ingreso_extr
+      - r_permanencia_nals
+      - r_permanencia_extr
+      - total_nals
+      - total_extr
+      - total_ing
+      - total_perm
+      - total
+      - fecha_creacion
+      title: EstadisticaHoteleraResponse
+    EstadisticaHoteleraUpdate:
+      properties:
+        numero_formulario:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Numero Formulario
+        mes:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Mes
+        gestion:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Gestion
+        fecha_presentacion:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Fecha Presentacion
+        cant_emp_perma:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Cant Emp Perma
+        cant_emp_event:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Cant Emp Event
+        archivo_foto:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Archivo Foto
+        archivo_pdf:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Archivo Pdf
+        detalles:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/DetalleEstadisticaInput'
+            type: array
+          - type: 'null'
+          title: Detalles
+        observaciones:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Observaciones
+        estado:
+          anyOf:
+          - $ref: '#/components/schemas/EstadoFormulario'
+          - type: 'null'
+      type: object
+      title: EstadisticaHoteleraUpdate
+      description: Permite al operador o dependiente editar una declaración.
+    EstadoFormulario:
+      type: string
+      enum:
+      - BORRADOR
+      - ENVIADO
+      - OBSERVADO
+      - APROBADO
+      title: EstadoFormulario
+      description: Estados del ciclo de vida de los formularios mensuales.
+    GraficoBarrasRankingResponse:
+      properties:
+        periodo:
+          $ref: '#/components/schemas/PeriodoReporte'
+        total_paises_con_movimiento:
+          type: integer
+          title: Total Paises Con Movimiento
+        criterio_orden:
+          type: string
+          title: Criterio Orden
+          default: total_afluencia
+        top_10:
+          items:
+            $ref: '#/components/schemas/NacionalidadRankingItem'
+          type: array
+          title: Top 10
+        resto:
+          items:
+            $ref: '#/components/schemas/NacionalidadRankingItem'
+          type: array
+          title: Resto
+        resto_paginacion:
+          anyOf:
+          - $ref: '#/components/schemas/PaginacionResto'
+          - type: 'null'
+        totales_periodo:
+          $ref: '#/components/schemas/TotalesAfluenciaPeriodo'
+      type: object
+      required:
+      - periodo
+      - total_paises_con_movimiento
+      - totales_periodo
+      title: GraficoBarrasRankingResponse
+      description: 'Respuesta estructurada para el gráfico de barras.
+
+        Separa el Top 10 y provee la información del 11 en adelante (resto).'
+    GraficoTortaNacionalesExtranjerosResponse:
+      properties:
+        periodo:
+          $ref: '#/components/schemas/PeriodoReporte'
+        totales_generales:
+          $ref: '#/components/schemas/TotalesHuespedes'
+        nacionales:
+          $ref: '#/components/schemas/SegmentoHuespedes'
+        extranjeros:
+          $ref: '#/components/schemas/SegmentoHuespedes'
+      type: object
+      required:
+      - periodo
+      - totales_generales
+      - nacionales
+      - extranjeros
+      title: GraficoTortaNacionalesExtranjerosResponse
+      description: Respuesta estructurada para el gráfico de torta nacional vs extranjero.
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    HabitacionItemInput:
+      properties:
+        id_tipo_habitacion:
+          type: integer
+          title: Id Tipo Habitacion
+          description: ID del catálogo de TipoHabitacion
+        cant_habitaciones:
+          type: integer
+          minimum: 0.0
+          title: Cant Habitaciones
+          description: Cantidad de habitaciones de este tipo
+        nro_camas:
+          type: integer
+          minimum: 0.0
+          title: Nro Camas
+          description: Número de camas asociadas a este tipo de habitación
+      type: object
+      required:
+      - id_tipo_habitacion
+      - cant_habitaciones
+      - nro_camas
+      title: HabitacionItemInput
+    HabitacionResponse:
+      properties:
+        id_tipo_habitacion:
+          type: integer
+          title: Id Tipo Habitacion
+        tipo_habitacion:
+          type: string
+          title: Tipo Habitacion
+        cant_habitaciones:
+          type: integer
+          title: Cant Habitaciones
+        nro_camas:
+          type: integer
+          title: Nro Camas
+      type: object
+      required:
+      - id_tipo_habitacion
+      - tipo_habitacion
+      - cant_habitaciones
+      - nro_camas
+      title: HabitacionResponse
+    LoginRequest:
+      properties:
+        email:
+          type: string
+          format: email
+          title: Email
+        password:
+          type: string
+          title: Password
+      type: object
+      required:
+      - email
+      - password
+      title: LoginRequest
+    MesDisponibleResponse:
+      properties:
+        mes:
+          type: string
+          title: Mes
+        numero_mes:
+          type: integer
+          title: Numero Mes
+        dias_en_mes:
+          type: integer
+          title: Dias En Mes
+        declarado:
+          type: boolean
+          title: Declarado
+        permitido:
+          type: boolean
+          title: Permitido
+        formulario_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Formulario Id
+      type: object
+      required:
+      - mes
+      - numero_mes
+      - dias_en_mes
+      - declarado
+      - permitido
+      title: MesDisponibleResponse
+      description: Información dinámica de meses según calendario real.
+    NacionalidadCreate:
+      properties:
+        pais:
+          type: string
+          maxLength: 100
+          minLength: 2
+          title: Pais
+          description: Nombre del país o procedencia
+        cod_pais:
+          type: string
+          maxLength: 4
+          minLength: 2
+          title: Cod Pais
+          description: 'Código ISO 3166-1 alfa-2 o código de región oficial (ej: BO,
+            AR, XAM)'
+        continente:
+          anyOf:
+          - type: string
+            maxLength: 50
+          - type: 'null'
+          title: Continente
+          description: Continente o región geográfica de clasificación
+        activo:
+          type: boolean
+          title: Activo
+          description: Indica si la nacionalidad está habilitada para selección
+          default: true
+      type: object
+      required:
+      - pais
+      - cod_pais
+      title: NacionalidadCreate
+      description: Schema para creación manual de una nueva nacionalidad por el administrador.
+    NacionalidadRankingItem:
+      properties:
+        ranking:
+          type: integer
+          title: Ranking
+          description: Posición en el ranking (1, 2, ...)
+        id_nacionalidad:
+          type: integer
+          title: Id Nacionalidad
+        pais:
+          type: string
+          title: Pais
+        cod_pais:
+          type: string
+          title: Cod Pais
+        continente:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Continente
+        cant_ingresos:
+          type: integer
+          title: Cant Ingresos
+          default: 0
+        cant_permanencias:
+          type: integer
+          title: Cant Permanencias
+          default: 0
+        total_afluencia:
+          type: integer
+          title: Total Afluencia
+          description: Suma de ingresos + permanencias
+          default: 0
+        porcentaje_del_total:
+          type: number
+          title: Porcentaje Del Total
+          description: Participación porcentual en la afluencia total
+          default: 0.0
+      type: object
+      required:
+      - ranking
+      - id_nacionalidad
+      - pais
+      - cod_pais
+      title: NacionalidadRankingItem
+      description: Detalle de afluencia por nacionalidad clasificada en el ranking.
+    NacionalidadResponse:
+      properties:
+        pais:
+          type: string
+          maxLength: 100
+          minLength: 2
+          title: Pais
+          description: Nombre del país o procedencia
+        cod_pais:
+          type: string
+          maxLength: 4
+          minLength: 2
+          title: Cod Pais
+          description: 'Código ISO 3166-1 alfa-2 o código de región oficial (ej: BO,
+            AR, XAM)'
+        continente:
+          anyOf:
+          - type: string
+            maxLength: 50
+          - type: 'null'
+          title: Continente
+          description: Continente o región geográfica de clasificación
+        activo:
+          type: boolean
+          title: Activo
+          description: Indica si la nacionalidad está habilitada para selección
+          default: true
+        id:
+          type: integer
+          title: Id
+      type: object
+      required:
+      - pais
+      - cod_pais
+      - id
+      title: NacionalidadResponse
+      description: Schema de respuesta para representación de nacionalidades.
+    NacionalidadSeedSummary:
+      properties:
+        total_registros_procesados:
+          type: integer
+          title: Total Registros Procesados
+        nuevos_insertados:
+          type: integer
+          title: Nuevos Insertados
+        existentes_omitidos:
+          type: integer
+          title: Existentes Omitidos
+        total_catalogo:
+          type: integer
+          title: Total Catalogo
+      type: object
+      required:
+      - total_registros_procesados
+      - nuevos_insertados
+      - existentes_omitidos
+      - total_catalogo
+      title: NacionalidadSeedSummary
+      description: Resumen de ejecución del proceso de poblamiento (seeding) del catálogo.
+    NacionalidadUpdate:
+      properties:
+        pais:
+          anyOf:
+          - type: string
+            maxLength: 100
+            minLength: 2
+          - type: 'null'
+          title: Pais
+        cod_pais:
+          anyOf:
+          - type: string
+            maxLength: 4
+            minLength: 2
+          - type: 'null'
+          title: Cod Pais
+        continente:
+          anyOf:
+          - type: string
+            maxLength: 50
+          - type: 'null'
+          title: Continente
+        activo:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Activo
+      type: object
+      title: NacionalidadUpdate
+      description: Schema para modificación parcial de datos de una nacionalidad.
+    OcupacionHoteleraCreate:
+      properties:
+        mes:
+          type: string
+          maxLength: 20
+          minLength: 3
+          title: Mes
+        gestion:
+          type: integer
+          maximum: 2100.0
+          minimum: 2000.0
+          title: Gestion
+        fecha_presentacion:
+          type: string
+          format: date
+          title: Fecha Presentacion
+        archivo_foto:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Archivo Foto
+        archivo_pdf:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Archivo Pdf
+        detalles:
+          items:
+            $ref: '#/components/schemas/DetalleOcupacionInput'
+          type: array
+          title: Detalles
+        observaciones:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Observaciones
+        enviar_en_limpio:
+          type: boolean
+          title: Enviar En Limpio
+          description: Si True, estado=ENVIADO; si False, BORRADOR
+          default: true
+      type: object
+      required:
+      - mes
+      - gestion
+      - fecha_presentacion
+      title: OcupacionHoteleraCreate
+      description: Payload para confirmar y guardar Ocupación Hotelera en limpio.
+    OcupacionHoteleraPreviewResponse:
+      properties:
+        mes:
+          type: string
+          title: Mes
+        gestion:
+          type: integer
+          title: Gestion
+        fecha_presentacion:
+          type: string
+          format: date
+          title: Fecha Presentacion
+        total_hab_ocupadas:
+          type: integer
+          title: Total Hab Ocupadas
+          default: 0
+        total_personas:
+          type: integer
+          title: Total Personas
+          default: 0
+        archivo_foto:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Archivo Foto
+        archivo_pdf:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Archivo Pdf
+        detalles:
+          items:
+            $ref: '#/components/schemas/DetalleOcupacionInput'
+          type: array
+          title: Detalles
+          default: []
+        advertencias:
+          items:
+            type: string
+          type: array
+          title: Advertencias
+          default: []
+      type: object
+      required:
+      - mes
+      - gestion
+      - fecha_presentacion
+      title: OcupacionHoteleraPreviewResponse
+      description: Respuesta de previsualización para Ocupación Hotelera.
+    OcupacionHoteleraResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        id_establecimiento:
+          type: integer
+          title: Id Establecimiento
+        mes:
+          type: string
+          title: Mes
+        gestion:
+          type: integer
+          title: Gestion
+        fecha_presentacion:
+          type: string
+          format: date
+          title: Fecha Presentacion
+        total_hab_ocupadas:
+          type: integer
+          title: Total Hab Ocupadas
+        total_personas:
+          type: integer
+          title: Total Personas
+        archivo_foto:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Archivo Foto
+        archivo_pdf:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Archivo Pdf
+        estado:
+          $ref: '#/components/schemas/EstadoFormulario'
+        observaciones:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Observaciones
+        fecha_creacion:
+          type: string
+          format: date-time
+          title: Fecha Creacion
+        fecha_modificacion:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Fecha Modificacion
+        detalles:
+          items:
+            $ref: '#/components/schemas/DetalleOcupacionResponse'
+          type: array
+          title: Detalles
+          default: []
+      type: object
+      required:
+      - id
+      - id_establecimiento
+      - mes
+      - gestion
+      - fecha_presentacion
+      - total_hab_ocupadas
+      - total_personas
+      - estado
+      - fecha_creacion
+      title: OcupacionHoteleraResponse
+    OcupacionHoteleraUpdate:
+      properties:
+        mes:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Mes
+        gestion:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Gestion
+        fecha_presentacion:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Fecha Presentacion
+        archivo_foto:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Archivo Foto
+        archivo_pdf:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Archivo Pdf
+        detalles:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/DetalleOcupacionInput'
+            type: array
+          - type: 'null'
+          title: Detalles
+        observaciones:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Observaciones
+        estado:
+          anyOf:
+          - $ref: '#/components/schemas/EstadoFormulario'
+          - type: 'null'
+      type: object
+      title: OcupacionHoteleraUpdate
+      description: Edición de formulario de Ocupación Hotelera.
+    PaginacionResto:
+      properties:
+        total_items_resto:
+          type: integer
+          title: Total Items Resto
+          default: 0
+        skip:
+          type: integer
+          title: Skip
+          default: 0
+        limit:
+          type: integer
+          title: Limit
+          default: 50
+      type: object
+      title: PaginacionResto
+      description: Información de paginación para el bloque del 11 en adelante.
+    PeriodoReporte:
+      properties:
+        tipo_filtro:
+          type: string
+          title: Tipo Filtro
+          description: rango_fechas | mes_gestion | rango_gestiones | general
+        descripcion:
+          type: string
+          title: Descripcion
+        fecha_inicio:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Fecha Inicio
+        fecha_fin:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Fecha Fin
+        mes:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Mes
+        gestion:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Gestion
+        gestion_inicio:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Gestion Inicio
+        gestion_fin:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Gestion Fin
+      type: object
+      required:
+      - tipo_filtro
+      - descripcion
+      title: PeriodoReporte
+      description: Metadatos del período consultado en el reporte estadístico.
+    PeriodosDisponiblesResponse:
+      properties:
+        gestion:
+          type: integer
+          title: Gestion
+        meses:
+          items:
+            $ref: '#/components/schemas/MesDisponibleResponse'
+          type: array
+          title: Meses
+      type: object
+      required:
+      - gestion
+      - meses
+      title: PeriodosDisponiblesResponse
+    PermanenciasVsIngresosResponse:
+      properties:
+        periodo:
+          $ref: '#/components/schemas/PeriodoReporte'
+        agrupacion:
+          type: string
+          title: Agrupacion
+          description: '''pais'' (compara países) o ''tiempo'' (evolución temporal)'
+        filtro_paises_aplicado:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Filtro Paises Aplicado
+        series:
+          items:
+            $ref: '#/components/schemas/SerieComparativaItem'
+          type: array
+          title: Series
+        totales:
+          $ref: '#/components/schemas/TotalesComparativa'
+      type: object
+      required:
+      - periodo
+      - agrupacion
+      - totales
+      title: PermanenciasVsIngresosResponse
+      description: Respuesta comparativa de pernoctaciones vs llegadas.
+    RespaldoAdjuntoResponse:
+      properties:
+        archivo_foto:
+          type: string
+          title: Archivo Foto
+        archivo_pdf:
+          type: string
+          title: Archivo Pdf
+        mensaje:
+          type: string
+          title: Mensaje
+          default: Respaldo digitalizado y transformado a PDF con éxito.
+      type: object
+      required:
+      - archivo_foto
+      - archivo_pdf
+      title: RespaldoAdjuntoResponse
+      description: Respuesta de la subida y conversión de imagen de respaldo a PDF.
+    ResumenEstadistica:
+      properties:
+        r_ingreso_nals:
+          type: integer
+          minimum: 0.0
+          title: R Ingreso Nals
+          description: Ingreso de huéspedes nacionales (Bolivia)
+          default: 0
+        r_ingreso_extr:
+          type: integer
+          minimum: 0.0
+          title: R Ingreso Extr
+          description: Ingreso de huéspedes extranjeros
+          default: 0
+        r_permanencia_nals:
+          type: integer
+          minimum: 0.0
+          title: R Permanencia Nals
+          description: Pernoctaciones de huéspedes nacionales (Bolivia)
+          default: 0
+        r_permanencia_extr:
+          type: integer
+          minimum: 0.0
+          title: R Permanencia Extr
+          description: Pernoctaciones de huéspedes extranjeros
+          default: 0
+        total_nals:
+          type: integer
+          minimum: 0.0
+          title: Total Nals
+          description: Suma automática r_ingreso_nals + r_permanencia_nals
+          default: 0
+        total_extr:
+          type: integer
+          minimum: 0.0
+          title: Total Extr
+          description: Suma automática r_ingreso_extr + r_permanencia_extr
+          default: 0
+        total_ing:
+          type: integer
+          minimum: 0.0
+          title: Total Ing
+          description: Suma automática r_ingreso_nals + r_ingreso_extr
+          default: 0
+        total_perm:
+          type: integer
+          minimum: 0.0
+          title: Total Perm
+          description: Suma automática r_permanencia_nals + r_permanencia_extr
+          default: 0
+        total:
+          type: integer
+          minimum: 0.0
+          title: Total
+          description: Total general que debe cuadrar horizontal y verticalmente
+          default: 0
+      type: object
+      title: ResumenEstadistica
+      description: Cuadro de resumen oficial con validación estricta de sumatorias
+        cruzadas.
+    RolUsuario:
+      type: string
+      enum:
+      - ADMIN_DEPARTAMENTAL
+      - OPERADOR_HOSPEDAJE
+      - DEPENDIENTE_HOSPEDAJE
+      title: RolUsuario
+      description: Roles de usuario conforme a los lineamientos RBAC de AGETIC.
+    SeccionAMapeada:
+      properties:
+        nombre_establecimiento:
+          type: string
+          title: Nombre Establecimiento
+        direccion:
+          type: string
+          title: Direccion
+        categoria:
+          type: string
+          title: Categoria
+        ciudad:
+          type: string
+          title: Ciudad
+          default: Oruro
+        telefono:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Telefono
+      type: object
+      required:
+      - nombre_establecimiento
+      - direccion
+      - categoria
+      title: SeccionAMapeada
+      description: Mapeo automático de datos del establecimiento (Sección A) sin duplicación
+        en BD.
+    SeccionCMapeada:
+      properties:
+        habitaciones:
+          items:
+            $ref: '#/components/schemas/TipoHabitacionMapeada'
+          type: array
+          title: Habitaciones
+          default: []
+        total_habitaciones:
+          type: integer
+          title: Total Habitaciones
+        total_plazas:
+          type: integer
+          title: Total Plazas
+      type: object
+      required:
+      - total_habitaciones
+      - total_plazas
+      title: SeccionCMapeada
+      description: Mapeo de capacidad instalada del establecimiento (Sección C).
+    SegmentoHuespedes:
+      properties:
+        pais:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Pais
+        cod_pais:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Cod Pais
+        cant_ingresos:
+          type: integer
+          title: Cant Ingresos
+          description: Total de llegadas registradas
+          default: 0
+        cant_permanencias:
+          type: integer
+          title: Cant Permanencias
+          description: Total de noches de permanencia
+          default: 0
+        total:
+          type: integer
+          title: Total
+          description: Suma de ingresos y permanencias
+          default: 0
+        porcentaje_ingresos:
+          type: number
+          title: Porcentaje Ingresos
+          description: Porcentaje respecto al total de ingresos
+          default: 0.0
+        porcentaje_permanencias:
+          type: number
+          title: Porcentaje Permanencias
+          description: Porcentaje respecto al total de permanencias
+          default: 0.0
+        porcentaje_total:
+          type: number
+          title: Porcentaje Total
+          description: Porcentaje respecto a la afluencia total
+          default: 0.0
+      type: object
+      title: SegmentoHuespedes
+      description: Métricas agregadas para un segmento de huéspedes (Nacionales o
+        Extranjeros).
+    SerieComparativaItem:
+      properties:
+        etiqueta:
+          type: string
+          title: Etiqueta
+          description: Nombre del país o identificador de fecha/mes
+        codigo:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Codigo
+        id_nacionalidad:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Id Nacionalidad
+        ingresos:
+          type: integer
+          title: Ingresos
+          default: 0
+        permanencias:
+          type: integer
+          title: Permanencias
+          default: 0
+        total:
+          type: integer
+          title: Total
+          default: 0
+        ratio_permanencia_ingreso:
+          type: number
+          title: Ratio Permanencia Ingreso
+          description: Noches promedio por huésped (permanencias / ingresos)
+          default: 0.0
+      type: object
+      required:
+      - etiqueta
+      title: SerieComparativaItem
+      description: Punto de comparación entre permanencias e ingresos.
+    TableroEjecutivoResponse:
+      properties:
+        periodo:
+          $ref: '#/components/schemas/PeriodoReporte'
+        establecimientos_registrados:
+          type: integer
+          title: Establecimientos Registrados
+        establecimientos_declarantes:
+          type: integer
+          title: Establecimientos Declarantes
+        porcentaje_cobertura_establecimientos:
+          type: number
+          title: Porcentaje Cobertura Establecimientos
+        total_formularios_declarados:
+          type: integer
+          title: Total Formularios Declarados
+        total_ingresos:
+          type: integer
+          title: Total Ingresos
+        total_permanencias:
+          type: integer
+          title: Total Permanencias
+        total_huespedes:
+          type: integer
+          title: Total Huespedes
+        total_habitaciones_ofertadas:
+          type: integer
+          title: Total Habitaciones Ofertadas
+        total_habitaciones_ocupadas:
+          type: integer
+          title: Total Habitaciones Ocupadas
+        tasa_ocupacion_porcentaje:
+          type: number
+          title: Tasa Ocupacion Porcentaje
+        estadia_media_noches:
+          type: number
+          title: Estadia Media Noches
+      type: object
+      required:
+      - periodo
+      - establecimientos_registrados
+      - establecimientos_declarantes
+      - porcentaje_cobertura_establecimientos
+      - total_formularios_declarados
+      - total_ingresos
+      - total_permanencias
+      - total_huespedes
+      - total_habitaciones_ofertadas
+      - total_habitaciones_ocupadas
+      - tasa_ocupacion_porcentaje
+      - estadia_media_noches
+      title: TableroEjecutivoResponse
+      description: Métricas e indicadores clave a nivel departamental para toma de
+        decisiones.
+    TipoHabitacionEnum:
+      type: string
+      enum:
+      - suite
+      - matrimonial
+      - simple
+      - doble
+      - triple
+      - multiple
+      title: TipoHabitacionEnum
+      description: Tipos estándar de habitación según categorización hotelera departamental.
+    TipoHabitacionMapeada:
+      properties:
+        tipo_habitacion:
+          type: string
+          title: Tipo Habitacion
+        cant_habitaciones:
+          type: integer
+          title: Cant Habitaciones
+        nro_camas:
+          type: integer
+          title: Nro Camas
+      type: object
+      required:
+      - tipo_habitacion
+      - cant_habitaciones
+      - nro_camas
+      title: TipoHabitacionMapeada
+    TipoHabitacionResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        tipo_habitacion:
+          $ref: '#/components/schemas/TipoHabitacionEnum'
+        descripcion:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Descripcion
+      type: object
+      required:
+      - id
+      - tipo_habitacion
+      title: TipoHabitacionResponse
+    TokenResponse:
+      properties:
+        access_token:
+          type: string
+          title: Access Token
+        token_type:
+          type: string
+          title: Token Type
+          default: bearer
+        user:
+          $ref: '#/components/schemas/UserResponse'
+      type: object
+      required:
+      - access_token
+      - user
+      title: TokenResponse
+    TotalesAfluenciaPeriodo:
+      properties:
+        total_ingresos:
+          type: integer
+          title: Total Ingresos
+          default: 0
+        total_permanencias:
+          type: integer
+          title: Total Permanencias
+          default: 0
+        total_general:
+          type: integer
+          title: Total General
+          default: 0
+      type: object
+      title: TotalesAfluenciaPeriodo
+      description: Totales de control del período consultado.
+    TotalesComparativa:
+      properties:
+        total_ingresos:
+          type: integer
+          title: Total Ingresos
+          default: 0
+        total_permanencias:
+          type: integer
+          title: Total Permanencias
+          default: 0
+        promedio_general_noches:
+          type: number
+          title: Promedio General Noches
+          default: 0.0
+      type: object
+      title: TotalesComparativa
+    TotalesHuespedes:
+      properties:
+        total_ingresos:
+          type: integer
+          title: Total Ingresos
+          default: 0
+        total_permanencias:
+          type: integer
+          title: Total Permanencias
+          default: 0
+        total_general:
+          type: integer
+          title: Total General
+          default: 0
+      type: object
+      title: TotalesHuespedes
+      description: Sumatorias generales del período para el gráfico de torta.
+    UserCreate:
+      properties:
+        email:
+          type: string
+          format: email
+          title: Email
+        nombre_completo:
+          type: string
+          maxLength: 150
+          minLength: 3
+          title: Nombre Completo
+        rol:
+          $ref: '#/components/schemas/RolUsuario'
+          default: OPERADOR_HOSPEDAJE
+        id_establecimiento:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Id Establecimiento
+          description: ID del establecimiento asociado si aplica.
+        password:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Password
+          description: Contraseña inicial del usuario. Si se omite, se generará una
+            automáticamente.
+      type: object
+      required:
+      - email
+      - nombre_completo
+      title: UserCreate
+    UserResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        email:
+          type: string
+          format: email
+          title: Email
+        nombre_completo:
+          type: string
+          title: Nombre Completo
+        rol:
+          $ref: '#/components/schemas/RolUsuario'
+        id_establecimiento:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Id Establecimiento
+        activo:
+          type: boolean
+          title: Activo
+        credenciales_enviadas:
+          type: boolean
+          title: Credenciales Enviadas
+        fecha_creacion:
+          type: string
+          format: date-time
+          title: Fecha Creacion
+        ultimo_login:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Ultimo Login
+      type: object
+      required:
+      - id
+      - email
+      - nombre_completo
+      - rol
+      - activo
+      - credenciales_enviadas
+      - fecha_creacion
+      title: UserResponse
+    UserUpdate:
+      properties:
+        email:
+          anyOf:
+          - type: string
+            format: email
+          - type: 'null'
+          title: Email
+        nombre_completo:
+          anyOf:
+          - type: string
+            maxLength: 150
+            minLength: 3
+          - type: 'null'
+          title: Nombre Completo
+        rol:
+          anyOf:
+          - $ref: '#/components/schemas/RolUsuario'
+          - type: 'null'
+        id_establecimiento:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Id Establecimiento
+        activo:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Activo
+      type: object
+      title: UserUpdate
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+  securitySchemes:
+    OAuth2PasswordBearer:
+      type: oauth2
+      flows:
+        password:
+          scopes: {}
+          tokenUrl: /api/v1/usuarios/login
+tags:
+- name: Autenticación y Usuarios
+  description: Control de acceso, gestión de sesiones JWT, roles RBAC y envío de credenciales
+    conforme a directrices de AGETIC.
+- name: Establecimientos y Capacidad Instalada
+  description: Ficha técnica, georreferenciación GPS, categorización, capacidad instalada
+    de habitaciones/plazas y gestión aislada de dependientes.
+- name: Catálogo de Nacionalidades
+  description: Estandarización de procedencias según norma ISO 3166-1 alfa-2 y columnas
+    preimpresas del formulario oficial.
+- name: Formularios Hoteleros (Digitalización y Operativa)
+  description: Carga de Estadísticas Hoteleras y Ocupación Hotelera, calendario dinámico
+    real, matriz dispersa y conversión de fotos a PDF.
+- name: Módulo Administrativo y Reportes Estadísticos
+  description: Tableros ejecutivos, gráficos estadísticos dinámicos (torta, ranking
+    de barras, permanencias vs ingresos), bitácora de cumplimiento y exportación CSV.
+- name: Salud
+  description: Verificación de disponibilidad y health-check del servicio.
